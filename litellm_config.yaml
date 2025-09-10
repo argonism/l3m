@@ -1,0 +1,21 @@
+model_list:
+  # 用途別の論理名を作っておくと後で差し替えが楽
+  - model_name: sarashina-3b
+    litellm_params:
+      model: ollama/sarashina-3b
+      api_base: http://ollama:11434
+
+  - model_name: gpt-oss-20b
+    litellm_params:
+      model: ollama/gpt-oss:20b
+      api_base: http://ollama:11434
+
+  - model_name: gpt-4o-mini
+    litellm_params:
+      model: gpt-4o-mini
+      api_key: ${OPENAI_API_KEY}
+
+  - model_name: claude-3-5-sonnet
+    litellm_params:
+      model: anthropic/claude-3-5-sonnet
+      api_key: ${ANTHROPIC_API_KEY}
