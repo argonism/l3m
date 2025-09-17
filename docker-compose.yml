@@ -7,23 +7,24 @@ networks:
 
 volumes:
   ollama_data:
+  postgres_data:
 
 services:
   ollama:
     image: ollama/ollama:latest
     container_name: ollama
     restart: unless-stopped
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: all
-    #           capabilities: [gpu]
-    # environment:
-      # OLLAMA_KEEP_ALIVE: ${OLLAMA_KEEP_ALIVE}
-      # NVIDIA_VISIBLE_DEVICES: all   # GPU の場合
-      # NVIDIA_DRIVER_CAPABILITIES: compute,utility
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    environment:
+      OLLAMA_KEEP_ALIVE: ${OLLAMA_KEEP_ALIVE}
+      NVIDIA_VISIBLE_DEVICES: all   # GPU の場合
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
     volumes:
       - ollama_data:/root/.ollama
     ports:
@@ -57,6 +58,8 @@ services:
     environment:
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      DATABASE_URL: "postgresql://llmproxy:dbpassword9090@db:5432/litellm"
+      LITELLM_MASTER_KEY: "sk-1234"
     volumes:
       - ./litellm_config.yaml:/app/config.yaml:ro
     command: ["--config", "/app/config.yaml", "--port", "4000"]
@@ -69,6 +72,22 @@ services:
       interval: 10s
       timeout: 5s
       retries: 20
+
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: litellm
+      POSTGRES_USER: llmproxy
+      POSTGRES_PASSWORD: dbpassword9090
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks: [ llmnet_internal ]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d litellm -U llmproxy"]
+      interval: 1s
+      timeout: 5s
+      retries: 10
 
   prometheus:
     image: prom/prometheus:latest
