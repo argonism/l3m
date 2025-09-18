@@ -60,6 +60,8 @@ services:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       DATABASE_URL: "postgresql://llmproxy:dbpassword9090@db:5432/litellm"
       LITELLM_MASTER_KEY: "sk-1234"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317"
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/grpc
     volumes:
       - ./litellm_config.yaml:/app/config.yaml:ro
     command: ["--config", "/app/config.yaml", "--port", "4000"]
@@ -88,23 +90,3 @@ services:
       interval: 1s
       timeout: 5s
       retries: 10
-
-  prometheus:
-    image: prom/prometheus:latest
-    restart: unless-stopped
-    networks: [ llmnet_internal ]
-    ports: ["9090:9090"]
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
-
-  grafana:
-    image: grafana/grafana:latest
-    restart: unless-stopped
-    networks: [ llmnet_internal ]
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
-    volumes:
-      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
-      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
-    depends_on: [ prometheus ]
-    ports: ["3030:3000"]
